@@ -58,30 +58,29 @@ jobs:
       id: tf_outputs
       run: |
         echo "Reading storage outputs..."
-
+    
         STORAGE_ACCOUNT=$(terraform -chdir=terraform output -raw storage_account_name)
         CONTAINER_NAME=$(terraform -chdir=terraform output -raw storage_container_name)
-        STORAGE_KEY=$(terraform -chdir=terraform output -raw storage_primary_key | base64)
-
-        # Write safe outputs
-        printf "storage_account=%s\n" "$STORAGE_ACCOUNT" >> "$GITHUB_OUTPUT"
-        printf "container_name=%s\n" "$CONTAINER_NAME" >> "$GITHUB_OUTPUT"
-        printf "STORAGE_KEY_B64=%s\n" "$STORAGE_KEY" >> "$GITHUB_ENV"
+        STORAGE_KEY=$(terraform -chdir=terraform output -raw storage_primary_key)
+    
+        echo "storage_account=$STORAGE_ACCOUNT" >> $GITHUB_OUTPUT
+        echo "container_name=$CONTAINER_NAME" >> $GITHUB_OUTPUT
+    
+        # Use temp file for STORAGE_KEY to avoid formatting issues
+        echo "STORAGE_KEY<<EOF" >> $GITHUB_ENV
+        echo "$STORAGE_KEY" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
       env:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-
-
+    
     - name: Upload files to Azure Blob Storage
       run: |
-        echo "$STORAGE_KEY_B64" | base64 -d > decoded_key.txt
-        KEY=$(cat decoded_key.txt)
-
         az storage blob upload-batch \
           --destination ${{ steps.tf_outputs.outputs.container_name }} \
           --source ./data \
           --account-name ${{ steps.tf_outputs.outputs.storage_account }} \
           --auth-mode key \
-          --account-key "$KEY"
+            --account-key "$STORAGE_KEY"
