@@ -48,6 +48,11 @@ jobs:
 
     - name: Show all Terraform outputs (for debugging only)
       run: terraform -chdir=terraform output
+      env:
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       
     - name: Extract Terraform Output (Storage Key and Name)
       id: tf_outputs
@@ -66,3 +71,8 @@ jobs:
           --account-name ${{ steps.tf_outputs.outputs.storage_account }} \
           --auth-mode key \
           --account-key ${{ steps.tf_outputs.outputs.storage_key }}
+      env:
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
