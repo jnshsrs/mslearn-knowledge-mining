@@ -54,6 +54,19 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
+    - name: Extract Terraform Output
+      id: tf_outputs
+      run: |
+        echo "Reading storage outputs..."
+    
+        STORAGE_ACCOUNT=$(terraform -chdir=terraform output -raw storage_account_name)
+        CONTAINER_NAME=$(terraform -chdir=terraform output -raw storage_container_name)
+        STORAGE_KEY=$(terraform -chdir=terraform output -raw storage_primary_key)
+    
+        printf "storage_account=%s\n" "$STORAGE_ACCOUNT" >> "$GITHUB_OUTPUT"
+        printf "container_name=%s\n" "$CONTAINER_NAME" >> "$GITHUB_OUTPUT"
+        printf "STORAGE_KEY=%s\n" "$STORAGE_KEY" >> "$GITHUB_ENV"
+
     - name: Upload files to Azure Blob Storage
       run: |
         az storage blob upload-batch \
