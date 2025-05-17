@@ -53,19 +53,6 @@ jobs:
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-      
-    - name: Extract Terraform Output
-      id: tf_outputs
-      run: |
-        echo "Reading storage outputs..."
-        echo "storage_account=$(terraform -chdir=terraform output -raw storage_account_name)" >> $GITHUB_OUTPUT
-    
-        echo "STORAGE_KEY=$(terraform -chdir=terraform output -raw storage_primary_key)" >> $GITHUB_ENV
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
     - name: Upload files to Azure Blob Storage
       run: |
@@ -74,4 +61,4 @@ jobs:
           --source ./data \
           --account-name ${{ steps.tf_outputs.outputs.storage_account }} \
           --auth-mode key \
-          --account-key ${{ steps.tf_outputs.outputs.storage_key }}
+          --account-key $STORAGE_KEY
