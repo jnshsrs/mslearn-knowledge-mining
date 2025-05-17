@@ -54,14 +54,13 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       
-    - name: Extract Terraform Output (Storage Key and Name)
+    - name: Extract Terraform Output
       id: tf_outputs
       run: |
-        STORAGE_KEY=$(terraform -chdir=terraform output -raw storage_primary_key)
-        STORAGE_NAME=$(terraform -chdir=terraform output -raw storage_account_name)
-
-        echo "storage_key=$STORAGE_KEY" >> $GITHUB_OUTPUT
-        echo "storage_account=$STORAGE_NAME" >> $GITHUB_OUTPUT
+        echo "Reading storage outputs..."
+        echo "storage_account=$(terraform -chdir=terraform output -raw storage_account_name)" >> $GITHUB_OUTPUT
+    
+        echo "STORAGE_KEY=$(terraform -chdir=terraform output -raw storage_primary_key)" >> $GITHUB_ENV
       env:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
