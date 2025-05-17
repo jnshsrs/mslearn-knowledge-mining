@@ -37,7 +37,6 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
-
     - name: Terraform Apply
       run: terraform apply -auto-approve
       working-directory: terraform
@@ -46,3 +45,21 @@ jobs:
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+    - name: Extract Terraform Output (Storage Key and Name)
+      id: tf_outputs
+      run: |
+        STORAGE_KEY=$(terraform -chdir=terraform output -raw storage_primary_key)
+        STORAGE_NAME=$(terraform -chdir=terraform output -raw storage_account_name)
+
+        echo "storage_key=$STORAGE_KEY" >> $GITHUB_OUTPUT
+        echo "storage_account=$STORAGE_NAME" >> $GITHUB_OUTPUT
+
+    - name: Upload files to Azure Blob Storage
+      run: |
+        az storage blob upload-batch \
+          --destination margies \
+          --source ./data \
+          --account-name ${{ steps.tf_outputs.outputs.storage_account }} \
+          --auth-mode key \
+          --account-key ${{ steps.tf_outputs.outputs.storage_key }}

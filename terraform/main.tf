@@ -97,3 +97,4 @@ output "search_admin_key" {
   value     = azurerm_search_service.ai_search.primary_key
   sensitive = true
 }
+
