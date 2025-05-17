@@ -1,48 +1,201 @@
-name: Terraform Deploy
+# Terraform CI/CD Workflow with GitHub Actions
+# This workflow incorporates best practices including OIDC authentication (recommended),
+# plan/apply separation, artifact usage, manual approval for apply, and code validation.
+
+name: Terraform CI/CD
 
 on:
+  # Trigger on push to the cicd branch (e.g., after merging a PR)
   push:
     branches:
       - cicd
+  # Trigger on pull requests targeting the cicd branch (for plan generation)
+  pull_request:
+    branches:
+      - cicd
+  # Allow manual triggering of the workflow
+  workflow_dispatch:
+
+# Define global environment variables, including TF_IN_AUTOMATION
+env:
+  TF_WORKING_DIR: terraform # Set your Terraform working directory if it's not root
+  TF_IN_AUTOMATION: true
 
 jobs:
-  terraform:
+  #------------------------------------------------------------------------------------
+  # VALIDATE & LINT JOB: Checks formatting and validates Terraform configuration
+  #------------------------------------------------------------------------------------
+  validate_and_lint:
+    name: Validate and Lint Terraform
     runs-on: ubuntu-latest
+    permissions: # No cloud permissions needed for this job
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Use the latest version
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3 # Use the latest version
+        # terraform_version can be omitted if you use a .terraform-version file
+        # or a required_providers block with version constraints in your Terraform code.
+        # with:
+        #   terraform_version: "1.8.0" # Or your desired version
+
+      - name: Terraform Init (for validation only)
+        # Initialize only to download providers for validation, no backend needed here.
+        run: terraform init -backend=false
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        # No cloud credentials needed for local validation init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+  #------------------------------------------------------------------------------------
+  # PLAN JOB: Generates a Terraform plan and uploads it as an artifact
+  #------------------------------------------------------------------------------------
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: validate_and_lint # Run after validation and linting
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/cicd')
+
+    # Permissions for OIDC with Azure (adjust for your cloud provider)
+    permissions:
+      id-token: write # Required for OIDC
+      contents: read  # Required to checkout the code
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.5.0
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        # with:
+        #   terraform_version: "1.8.0"
 
-    - name: Terraform Init
-      run: terraform init
-      working-directory: terraform
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      # RECOMMENDED: Configure OIDC for Azure
+      # Replace with your Azure Tenant ID, Subscription ID, and Application (Client) ID
+      - name: Azure Login via OIDC
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }} # Store your Azure App Registration Client ID as a GitHub secret
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }} # Store your Azure Tenant ID as a GitHub secret
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Store your Azure Subscription ID as a GitHub secret
+        # Note: ARM_CLIENT_SECRET is NOT needed for OIDC
 
+      # If not using OIDC (less secure, fallback):
+      # env:
+      #   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      #   ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      #   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      #   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
-    - name: Terraform Plan
-      run: terraform plan
-      working-directory: terraform
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        # Environment variables for ARM (Azure) are automatically picked up by Terraform
+        # if using OIDC and azure/login, or if ARM_* vars are set in job/workflow env.
 
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan -no-color
+          # Check if the plan has changes. Exit with an error if there are changes and it's a PR.
+          # This is optional but can be useful for PR checks where you only want to see if apply is needed.
+          # terraform plan -detailed-exitcode -out=tfplan -no-color
+          # if [ $? -eq 2 ]; then
+          #   echo "Terraform plan has changes."
+          #   # If you want the PR to fail if there are changes, uncomment the next line
+          #   # exit 1
+          # fi
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        continue-on-error: ${{ github.event_name == 'pull_request' }} # Allow PR checks to show plan even if it would fail apply
 
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
-      working-directory: terraform
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      - name: Upload Plan Artifact
+        if: steps.plan.outcome == 'success' || steps.plan.outcome == 'failure' # Upload even if plan shows diffs that would error on -detailed-exitcode
+        uses: actions/upload-artifact@v4 # Use the latest version
+        with:
+          name: terraform-plan
+          path: ${{ env.TF_WORKING_DIR }}/tfplan
+          retention-days: 7 # Adjust retention as needed
+
+      # Optional: Add a comment to the PR with the plan output
+      # - name: Comment PR with Plan
+      #   if: github.event_name == 'pull_request' && steps.plan.outcome != 'skipped'
+      #   uses: actions/github-script@v7
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     script: |
+      #       const output = `#### Terraform Plan Output \n\`\`\`\n${{ steps.plan.outputs.stdout }}\n\`\`\``;
+      #       github.rest.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: output
+      #       });
+
+  #------------------------------------------------------------------------------------
+  # APPLY JOB: Applies the Terraform plan after manual approval (if configured)
+  #------------------------------------------------------------------------------------
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: plan # Depends on the plan job
+    # Only run on push to cicd (e.g., after PR merge) or manual dispatch
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/cicd') || github.event_name == 'workflow_dispatch'
+
+    # Configure a GitHub Environment for manual approval
+    # Create an environment named 'production' (or your desired name) in your repository settings
+    # and add required reviewers to it.
+    environment:
+      name: production # Replace with your environment name
+      url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} # Optional: URL to the workflow run
+
+    # Permissions for OIDC with Azure
+    permissions:
+      id-token: write
+      contents: read
+      # deployments: write # If using GitHub Deployments API with environments
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        # with:
+        #   terraform_version: "1.8.0"
+
+      # RECOMMENDED: Configure OIDC for Azure
+      - name: Azure Login via OIDC
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # If not using OIDC (fallback):
+      # env:
+      #   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      #   ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      #   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      #   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve ${{ env.TF_WORKING_DIR }}/tfplan
+        working-directory: ${{ env.TF_WORKING_DIR }} # Though apply takes the plan file path, CWD might still be relevant for some providers
