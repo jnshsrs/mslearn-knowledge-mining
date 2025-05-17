@@ -11,7 +11,7 @@ terraform {
 provider "azurerm" {
   features {}
 
-  subscription_id="ed303178-6b93-47ba-a666-b5ff8724fba0"
+  subscription_id = "ed303178-6b93-47ba-a666-b5ff8724fba0"
 }
 
 variable "resource_group_name" {
@@ -28,12 +28,12 @@ resource "azurerm_resource_group" "main" {
 }
 
 resource "azurerm_cognitive_account" "ai_services" {
-  name                         = "margiesmultiaiacct"
-  location                     = azurerm_resource_group.main.location
-  resource_group_name          = azurerm_resource_group.main.name
-  kind                         = "CognitiveServices"
-  sku_name                     = "S0"
-  custom_subdomain_name        = "margiesmulti"
+  name                          = "margiesmultiaiacct"
+  location                      = azurerm_resource_group.main.location
+  resource_group_name           = azurerm_resource_group.main.name
+  kind                          = "CognitiveServices"
+  sku_name                      = "S0"
+  custom_subdomain_name         = "margiesmulti"
   public_network_access_enabled = true
 
   tags = {
@@ -47,12 +47,12 @@ resource "azurerm_search_service" "ai_search" {
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "basic"
 
-  replica_count = 1
+  replica_count   = 1
   partition_count = 1
 }
 
 resource "azurerm_storage_account" "storage" {
-  name                     = "margiesstorageacct"  # must be globally unique
+  name                     = "margiesstorageacct" # must be globally unique
   resource_group_name      = azurerm_resource_group.main.name
   location                 = azurerm_resource_group.main.location
   account_tier             = "Standard"
