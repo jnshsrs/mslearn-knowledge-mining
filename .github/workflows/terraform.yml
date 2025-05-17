@@ -62,6 +62,11 @@ jobs:
 
         echo "storage_key=$STORAGE_KEY" >> $GITHUB_OUTPUT
         echo "storage_account=$STORAGE_NAME" >> $GITHUB_OUTPUT
+      env:
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
     - name: Upload files to Azure Blob Storage
       run: |
@@ -71,8 +76,3 @@ jobs:
           --account-name ${{ steps.tf_outputs.outputs.storage_account }} \
           --auth-mode key \
           --account-key ${{ steps.tf_outputs.outputs.storage_key }}
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
