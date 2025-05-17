@@ -46,6 +46,9 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
+    - name: Show all Terraform outputs (for debugging only)
+      run: terraform -chdir=terraform output
+      
     - name: Extract Terraform Output (Storage Key and Name)
       id: tf_outputs
       run: |
