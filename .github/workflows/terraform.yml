@@ -55,6 +55,9 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       
+    - name: Print Shell
+      run: echo $SHELL"
+      
     - name: Get Terraform Outputs
       id: tf_outputs
       working-directory: ./terraform # 1. Make sure this path is correct
