@@ -5,6 +5,7 @@ on:
     branches:
       - cicd
       - upload-data-via-workflow
+      - dev
 
 jobs:
   terraform:
