@@ -56,11 +56,20 @@ jobs:
       
     - name: Get Terraform Outputs
       id: tf_outputs
+      working-directory: ./terraform # 1. Make sure this path is correct
       run: |
-        echo "storage_account=$(terraform -chdir=terraform output -raw storage_account_name)" >> $GITHUB_OUTPUT
-        echo "storage_container=$(terraform -chdir=terraform output -raw storage_container_name)" >> $GITHUB_OUTPUT
-      # Ensure your ARM environment variables for auth are set here too
+        # 2. Ensure jq is available (usually is on GitHub-hosted runners)
+        SA_NAME=$(terraform output -json storage_account_name | jq -r '.value')
+        CONTAINER_NAME=$(terraform output -json storage_container_name | jq -r '.value')
+    
+        # 3. (Optional but good for debugging) Echo the captured values
+        echo "Captured SA Name: '$SA_NAME'"
+        echo "Captured Container Name: '$CONTAINER_NAME'"
+    
+        echo "storage_account=$SA_NAME" >> $GITHUB_OUTPUT
+        echo "storage_container=$CONTAINER_NAME" >> $GITHUB_OUTPUT
       env:
+        # 4. Ensure your ARM environment variables are correctly set for this step
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
