@@ -10,18 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3 # Or your specific version
-      with:
-        terraform_wrapper: false
-
-    - name: Checkout repository
+    - name: Checkout repository # This should usually come before setting up tools that might act on the repo
       uses: actions/checkout@v3
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v2
+    - name: Setup Terraform # Consolidated step
+      uses: hashicorp/setup-terraform@v3 # Use v3 or a newer stable version
       with:
         terraform_version: 1.5.0
+        terraform_wrapper: false 
 
     - name: Terraform Init
       run: terraform init
