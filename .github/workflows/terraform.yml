@@ -55,7 +55,7 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       
     - name: Use Storage Container Name
-      run: echo "The container is $(terraform -chdir=terraform output -raw search_admin_key)"
+      run: echo "The container is $(terraform -chdir=terraform output -raw storage_account_name)"
       env:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
