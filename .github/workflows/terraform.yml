@@ -91,6 +91,7 @@ jobs:
         # Use the storage account and container names from Terraform outputs
         STORAGE_ACCOUNT_NAME="${{ steps.tf_outputs.outputs.storage_account }}"
         CONTAINER_NAME="${{ steps.tf_outputs.outputs.storage_container }}"
+
         echo "The current workdir is: $(pwd)"
         echo "List of files in the current directory:"
         ls -alh
@@ -113,3 +114,4 @@ jobs:
           echo "Error: Source folder '$SOURCE_DATA_FOLDER' not found. Nothing to upload."
           # exit 1 
         fi
+        
