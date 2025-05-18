@@ -54,14 +54,14 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       
-    - name: Print storage account name
+    - name: Get Terraform Outputs
+      id: tf_outputs
       run: |
-        name=$(terraform -chdir=terraform output -raw storage_account_name)
-        echo "The container is $name"
+        echo "storage_account=$(terraform -chdir=terraform output -raw storage_account_name)" >> $GITHUB_OUTPUT
+        echo "storage_container=$(terraform -chdir=terraform output -raw storage_container_name)" >> $GITHUB_OUTPUT
+      # Ensure your ARM environment variables for auth are set here too
       env:
         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-      
-      
