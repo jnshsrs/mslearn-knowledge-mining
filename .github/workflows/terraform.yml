@@ -102,9 +102,9 @@ jobs:
         if [ -d "$SOURCE_DATA_FOLDER" ]; then
           az storage blob upload-batch \
             --account-name "$STORAGE_ACCOUNT_NAME" \
-            --destination "$CONTAINER_NAME" \ # <--- CORRECTED ARGUMENT HERE
+            --destination "$CONTAINER_NAME" \
             --source "$SOURCE_DATA_FOLDER" \
-            --destination-path "." \         # This specifies the path within the container (e.g., root)
+            --destination-path "." \        
             --overwrite \
             --auth-mode login \
             --output none
