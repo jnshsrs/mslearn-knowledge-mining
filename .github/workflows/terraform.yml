@@ -77,3 +77,32 @@ jobs:
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+    - name: Login to Azure CLI
+      uses: azure/login@v1
+      with:
+        # creds: ${{ secrets.AZURE_CREDENTIALS }} # Recommended: Store all SP creds as a JSON object secret
+        client-id: ${{ secrets.ARM_CLIENT_ID }}
+        tenant-id: ${{ secrets.ARM_TENANT_ID }}
+        subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        enable-AzPSSession: false # Set to true if you also need Azure PowerShell
+
+    # NEW STEP: Upload files from .data folder
+    - name: Upload files to Azure Storage
+      run: |
+        echo "Uploading files from ./.data to Storage Account: ${{ steps.tf_outputs.outputs.storage_account }}, Container: ${{ steps.tf_outputs.outputs.storage_container }}"
+        
+        # Ensure the .data directory exists before trying to upload
+        if [ -d "./.data" ]; then
+          az storage blob upload-batch \
+            --account-name "${{ steps.tf_outputs.outputs.storage_account }}" \
+            --container-name "${{ steps.tf_outputs.outputs.storage_container }}" \
+            --source "./.data" \
+            --destination-path "." \
+            --overwrite \
+            --auth-mode login # Use the Azure CLI's logged-in identity
+        else
+          echo "Error: .data directory not found. Nothing to upload."
+          # exit 1 # Optionally fail the step if the directory is missing
+        fi
+      # working-directory: ./ # Set this if your .data folder is not at the root of the checkout
