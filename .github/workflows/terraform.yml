@@ -82,8 +82,8 @@ jobs:
     - name: Login to Azure CLI
       uses: azure/login@v1
       with:
-        # creds: ${{ secrets.AZURE_CREDENTIALS }} # Recommended: Store all SP creds as a JSON object secret
         client-id: ${{ secrets.ARM_CLIENT_ID }}
+        client-secret: ${{ secrets.ARM_CLIENT_SECRET }}
         tenant-id: ${{ secrets.ARM_TENANT_ID }}
         subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         enable-AzPSSession: false # Set to true if you also need Azure PowerShell
