@@ -91,16 +91,12 @@ jobs:
         # Use the storage account and container names from Terraform outputs
         STORAGE_ACCOUNT_NAME="${{ steps.tf_outputs.outputs.storage_account }}"
         CONTAINER_NAME="${{ steps.tf_outputs.outputs.storage_container }}"
-        echo $(pwd)
+        echo "The current workdir is: $(pwd)"
+        echo "List of files in the current directory:"
+        ls -alh
+
         # Define your local source data folder. Adjust if your folder is named 'data' instead of '.data'
         SOURCE_DATA_FOLDER="./Labfiles/01-azure-search/data" 
-
-        echo "Ensuring container '$CONTAINER_NAME' exists in storage account '$STORAGE_ACCOUNT_NAME'..."
-        az storage container create \
-          --account-name "$STORAGE_ACCOUNT_NAME" \
-          --name "$CONTAINER_NAME" \
-          --auth-mode login \
-          --output none # Suppress verbose output for this command
 
         echo "Uploading files from '$SOURCE_DATA_FOLDER' to container '$CONTAINER_NAME'..."
         if [ -d "$SOURCE_DATA_FOLDER" ]; then
