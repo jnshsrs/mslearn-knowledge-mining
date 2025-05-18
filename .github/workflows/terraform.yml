@@ -100,14 +100,14 @@ jobs:
 
         echo "Uploading files from '$SOURCE_DATA_FOLDER' to container '$CONTAINER_NAME'..."
         if [ -d "$SOURCE_DATA_FOLDER" ]; then
-          az storage blob upload-batch \
-            --account-name "$STORAGE_ACCOUNT_NAME" \
-            --destination "$CONTAINER_NAME" \
-            --source "$SOURCE_DATA_FOLDER" \
-            --destination-path "." \        
-            --overwrite \
-            --auth-mode login \
-            --output none
+            az storage blob upload-batch \
+              --account-name "$STORAGE_ACCOUNT_NAME" \
+              --destination "$CONTAINER_NAME" \
+              --source "$SOURCE_DATA_FOLDER" \
+              --destination-path "." \
+              --overwrite \
+              --auth-mode login \
+              --output none
           echo "Files uploaded successfully."
         else
           echo "Error: Source folder '$SOURCE_DATA_FOLDER' not found. Nothing to upload."
