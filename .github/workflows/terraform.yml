@@ -56,7 +56,7 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
       
     - name: Print Shell
-      run: echo $SHELL"
+      run: echo $SHELL
       
     - name: Get Terraform Outputs
       id: tf_outputs
