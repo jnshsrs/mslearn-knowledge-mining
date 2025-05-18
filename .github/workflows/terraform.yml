@@ -82,11 +82,9 @@ jobs:
     - name: Login to Azure CLI
       uses: azure/login@v1
       with:
-        client-id: ${{ secrets.ARM_CLIENT_ID }}
-        client-secret: ${{ secrets.ARM_CLIENT_SECRET }}
-        tenant-id: ${{ secrets.ARM_TENANT_ID }}
-        subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        enable-AzPSSession: false # Set to true if you also need Azure PowerShell
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        enable-AzPSSession: false
+    
 
     # NEW STEP: Upload files from .data folder
     - name: Upload files to Azure Storage
