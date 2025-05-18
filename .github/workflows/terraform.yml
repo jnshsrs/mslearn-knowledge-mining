@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - cicd
-      - upload-data-via-workflow
-      - dev
+      - upload-data-via-workfow
 
 jobs:
   terraform:
