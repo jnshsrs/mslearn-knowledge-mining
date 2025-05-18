@@ -53,38 +53,7 @@ jobs:
         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-
-
-    - name: Extract Terraform Output
-      id: tf_outputs
-      shell: bash
-      run: |
-        echo "Reading storage outputs..."
-
-        STORAGE_ACCOUNT=$(terraform -chdir=terraform output -raw storage_account_name)
-        CONTAINER_NAME=$(terraform -chdir=terraform output -raw storage_container_name)
-        STORAGE_KEY=$(terraform -chdir=terraform output -raw storage_primary_key)
-
-        echo "storage_account=$STORAGE_ACCOUNT" >> "$GITHUB_OUTPUT"
-        echo "container_name=$CONTAINER_NAME" >> "$GITHUB_OUTPUT"
-
-        # Safely export the key (base64 encode if needed)
-        echo "STORAGE_KEY=$(echo "$STORAGE_KEY" | base64 -w 0)" >> "$GITHUB_ENV"
-      env:
-        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-
-
-    - name: Upload files to Azure Blob Storage
-      run: |
-        DECODED_KEY=$(echo "$STORAGE_KEY" | base64 --decode)
-
-        az storage blob upload-batch \
-          --destination ${{ steps.tf_outputs.outputs.container_name }} \
-          --source ./data \
-          --account-name ${{ steps.tf_outputs.outputs.storage_account }} \
-          --auth-mode key \
-          --account-key "$DECODED_KEY"
-
+      
+    - name: Use Storage Container Name
+      run: echo "The container is ${{ steps.storage_name.outputs.container_name }}"
+      
