@@ -10,7 +10,6 @@ terraform {
 
 provider "azurerm" {
   features {}
-
   subscription_id = "ed303178-6b93-47ba-a666-b5ff8724fba0"
 }
 
@@ -46,7 +45,6 @@ resource "azurerm_search_service" "ai_search" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "basic"
-
   replica_count   = 1
   partition_count = 1
 }
