@@ -113,7 +113,7 @@ jobs:
               --source "$SOURCE_DATA_FOLDER" \
               --destination-path "." \
               --overwrite \
-              --auth-mode login \
+              --auth-mode key \
               --output none
           echo "Files uploaded successfully."
         else
