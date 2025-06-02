@@ -79,13 +79,14 @@ jobs:
         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
-    - name: Login to Azure CLI
+    - name: Azure Login
       uses: azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-        enable-AzPSSession: false
+        client-id: ${{ secrets.ARM_CLIENT_ID }}
+        tenant-id: ${{ secrets.ARM_TENANT_ID }}
+        creds: ${{ secrets.ARM_CLIENT_SECRET }}
     
-            # MODIFIED STEP: Upload files to Azure Storage
+    # MODIFIED STEP: Upload files to Azure Storage
     - name: Upload files to Azure Storage
       run: |
         # Use the storage account and container names from Terraform outputs
