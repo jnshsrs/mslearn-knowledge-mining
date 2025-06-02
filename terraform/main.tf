@@ -34,8 +34,6 @@ resource "azurerm_cognitive_account" "ai_services" {
   sku_name                      = "S0"
   custom_subdomain_name         = "margiesmulti"
   public_network_access_enabled = true
-  restore                       = true 
-
   tags = {
     environment = "demo"
   }
